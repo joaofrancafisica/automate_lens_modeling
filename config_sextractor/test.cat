@@ -1,0 +1,10 @@
+#   1 MAG_AUTO               Kron-like elliptical aperture magnitude                    [mag]
+#   2 MAGERR_AUTO            RMS error for AUTO magnitude                               [mag]
+#   3 XMIN_IMAGE             Minimum x-coordinate among detected pixels                 [pixel]
+#   4 YMIN_IMAGE             Minimum y-coordinate among detected pixels                 [pixel]
+#   5 XMAX_IMAGE             Maximum x-coordinate among detected pixels                 [pixel]
+#   6 YMAX_IMAGE             Maximum y-coordinate among detected pixels                 [pixel]
+#   7 XPEAK_IMAGE            x-coordinate of the brightest pixel                        [pixel]
+#   8 YPEAK_IMAGE            y-coordinate of the brightest pixel                        [pixel]
+#   9 FLAGS                  Extraction flags                                          
+#  10 CLASS_STAR             S/G classifier output                                     
