@@ -12,7 +12,7 @@ image_pre_path = './lens_light_subtraction/'
 
 # read the input system number
 name = int(sys.argv[1])
-print('System chosen to fit: ', name-1)
+print('System chosen to fit: ', name)
 
 # search for this system in our dataframe
 modelized_systems = pd.read_csv('./test_dataset.csv')
@@ -57,7 +57,7 @@ if imfit_fitter.fitConverged is True:
     bestfit_params = imfit_fitter.getRawParameters()
     print('Best-fit parameter values: ', bestfit_params)
 
-    f = open('./lens_light_subtraction/lens_light_report_sph.csv', 'a') 
+    f = open('./lens_light_subtraction/lens_light_report_ell.csv', 'a') 
     f.write(str(name)+','+str(bestfit_params[0])+','+str(bestfit_params[1])+','+str(bestfit_params[2])+','+str(bestfit_params[3])+','+str(bestfit_params[4])+','+str(bestfit_params[5])+','+str(bestfit_params[6])+','+str(imfit_fitter.reducedFitStatistic)+'\n')
 
     f.close()
@@ -65,4 +65,4 @@ if imfit_fitter.fitConverged is True:
     # saving our results
     residual_image = original_image - imfit_fitter.getModelImage()
     hdu = fits.PrimaryHDU(data=residual_image)
-    hdu.writeto('./lens_light_subtraction/'+str(name)+'/'+str(name)+'_ImFit_SPHSERSIC.fits')
+    hdu.writeto('./lens_light_subtraction/'+str(name)+'/'+str(name)+'_ImFit_ELLSERSIC.fits')

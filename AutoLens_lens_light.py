@@ -58,7 +58,7 @@ imaging = imaging.apply_mask(mask=circ_mask+mask)
 source_galaxy_model = af.Model(al.Galaxy, redshift=zs)
 ## lens galaxy model
 
-lens_galaxy_model = af.Model(al.Galaxy, redshift=zl, bulge=al.lmp.SphSersic) # EllSersic or SphSersic
+lens_galaxy_model = af.Model(al.Galaxy, redshift=zl, bulge=al.lmp.EllSersic) # EllSersic or SphSersic
 
 # model object
 lens_light_model = af.Collection(galaxies=af.Collection(lens=lens_galaxy_model, source=source_galaxy_model))
@@ -67,7 +67,7 @@ lens_light_model = af.Collection(galaxies=af.Collection(lens=lens_galaxy_model, 
 ## search object
 search = af.DynestyStatic(path_prefix='./',
                           name = str(name),
-                          unique_tag = 'LensLight_SPHSERSIC',
+                          unique_tag = 'LensLight_ELLSERSIC',
                           nlive = 50,
                           number_of_cores = 4) # be carefull here! verify your core numbers
 ## analysis object
@@ -78,4 +78,4 @@ result = search.fit(model=lens_light_model, analysis=analysis)
 # saving our results
 ## residual image which is the original subtracted from the lens light
 residual_image = original_image - result.unmasked_model_image
-residual_image.output_to_fits('./lens_light_subtraction/'+str(name)+'/'+str(name)+'_AutoLens_SPHSERSIC.fits', overwrite=True)
+residual_image.output_to_fits('./lens_light_subtraction/'+str(name)+'/'+str(name)+'_AutoLens_ELLSERSIC.fits', overwrite=True)

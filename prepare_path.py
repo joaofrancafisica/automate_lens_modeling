@@ -11,6 +11,7 @@ import time
 from lenstronomy.Data.psf import PSF
 
 # setting our simulations path
+path_prefix = os.getcwd()
 simulations_pre_path = './simulations/fits_files/i/'
 config_sextractor_path = './config_sextractor/'
 
@@ -52,16 +53,17 @@ has_lens_light, f, x, y = teste.test()
 # if it has, set our mask and galfit files
 if has_lens_light:
     # finder for our inner mask (only the lens light, we will add this one to the sextractor one)
-    finder = utils.find_radius(pre_set_sigma=3, image_array=image_i)
-    norm, center, mask_radius= finder.get_radius() # gaussian normalization, center position (1-d) and radius (sigma)
+    #finder = utils.find_radius(pre_set_sigma=3, image_array=image_i)
+    #norm, center, mask_radius= finder.get_radius() # gaussian normalization, center position (1-d) and radius (sigma)
     # check if the algorithm converged in order to achieve a valid value of radius
-    radius_value = mask_radius*float(pixel_scale)
-    if radius_value > 3.:
+    #radius_value = mask_radius*float(pixel_scale)*3.
+    #print(radius_value)
+    #if radius_value > 3.:
         # if not, set a mask with radius equals to 3
-        radius_value = 3.
+        #radius_value = 3.
         
     # circular inner mask
-    mask = al.Mask2D.circular(shape_native=shape, pixel_scales=pixel_scale, radius=radius_value)
+    mask = al.Mask2D.circular(shape_native=shape, pixel_scales=pixel_scale, radius=8.)
     
     # apply sextractor
     ## original image path
@@ -69,29 +71,26 @@ if has_lens_light:
     # #moving the original image to sextractor path temporarly 
     subprocess.call(['mv', fits_path, config_sextractor_path])
     ## sextractor cmd command to have a segmentationf ile
-    sextractor_cmd = 'sex ' + str(str(objid-1)+ '.fits -c ./default.sex -DETECT_THRESH ' + str(np.var(image_i)) + ' -ANALYSIS_THRESH ' + str(np.mean(image_i)) + ' -MAG_ZEROPOINT ' + str(mag_zero_point) + ' -MAG_GAMMA ' + str(mag_gamma) + ' -GAIN ' + str(ccd_gain) + ' -PIXEL_SCALE ' + str(pixel_scale) + ' -SEEING_FWHM ' + str(seeing))
+    sextractor_cmd = 'sex ' + str(str(objid-1)+ '.fits -c ./default.sex -DETECT_THRESH ' + str(np.mean(image_i) + np.var(image_i)) + ' -ANALYSIS_THRESH ' + str(np.mean(image_i) + np.std(image_i)) + ' -MAG_ZEROPOINT ' + str(mag_zero_point) + ' -MAG_GAMMA ' + str(mag_gamma) + ' -GAIN ' + str(ccd_gain) + ' -PIXEL_SCALE ' + str(pixel_scale) + ' -SEEING_FWHM ' + str(seeing))
     
     ## call the command
-    subprocess.Popen(shlex.split(sextractor_cmd), cwd="/home/joao/Update_ALF/config_sextractor/")
+    subprocess.Popen(shlex.split(sextractor_cmd), cwd=str(path_prefix)+'/config_sextractor/')
     ## time to sleep running time for galfit
     time.sleep(2)
     ## segmentation file
     check=fits.open('./config_sextractor/check.fits')[0].data
-    ## set a boolean mask (segmentation file sometimes has 1, 2, 3, etc values)
-    for i in range(0, len(check)):
-        for j in range(0, len(check[i])):
-            if check[i][j] > 0:
-                # if sextractor detected something set 1 (a mask)
-                check[i][j] = 1
-    ## resulting mask as circular for lens plus segmentation file            
+    '''
+    for m in range(0, len(check)):
+        for n in range(0, len(check[m])):
+            if check[m][n] > 1:
+                check[m][n] = 1
+
+    check = np.array(check, dtype=bool)
+    
+    mask = np.array(mask, dtype=bool)
+    # set mask as segmenation plus autolens detection mask
     mask = mask + check
-    ## another boolean check
-    for i in range(0, len(mask)):
-        for j in range(0, len(mask[i])):
-            if mask[i][j] > 1:
-                mask[i][j] = 1
-            else:
-                mask[i][j] = 0
+    '''
     ## moving the original image to its original path            
     subprocess.call(['mv', config_sextractor_path+str(str(objid-1))+'.fits', simulations_pre_path])
     
@@ -123,15 +122,15 @@ if has_lens_light:
     hdu_image_i.writeto('./lens_light_subtraction/'+str(objid)+'/'+str(objid)+'.fits')
     
     # setting galfit feedme configuration file
-    f = open('./lens_light_subtraction/'+str(objid)+'/galfit_sph.feedme', 'a') 
+    f = open('./lens_light_subtraction/'+str(objid)+'/galfit_ell.feedme', 'a') 
     f.write('\n')
     f.write('=============================================================================== \n')
-    f.write('A)  /home/joao/Update_ALF/lens_light_subtraction/'+str(objid)+'/'+str(objid)+'.fits # Input data image (FITS file) \n'+
-            'B)  /home/joao/Update_ALF/lens_light_subtraction/'+str(objid)+'/imgblock.fits       # Output data image block \n'+
+    f.write('A)  '+str(path_prefix)+'/lens_light_subtraction/'+str(objid)+'/'+str(objid)+'.fits # Input data image (FITS file) \n'+
+            'B)  '+str(path_prefix)+'/lens_light_subtraction/'+str(objid)+'/imgblock.fits       # Output data image block \n'+
             'C) none                # Sigma image name (made from data if blank or "none") \n'+
-            'D)  /home/joao/Update_ALF/lens_light_subtraction/'+str(objid)+'/psf.fits   #        # Input PSF image and (optional) diffusion kernel \n'+
+            'D)  '+str(path_prefix)+'/lens_light_subtraction/'+str(objid)+'/psf.fits   #        # Input PSF image and (optional) diffusion kernel \n'+
             'E) 1                   # PSF fine sampling factor relative to data  \n'+
-            'F)  /home/joao/Update_ALF/lens_light_subtraction/'+str(objid)+'/mask.fits           # Bad pixel mask (FITS image or ASCII coord list) \n'+
+            'F)  '+str(path_prefix)+'/lens_light_subtraction/'+str(objid)+'/mask.fits           # Bad pixel mask (FITS image or ASCII coord list) \n'+
             'G) none                # File with parameter constraints (ASCII file)  \n'+
             'H) 1    100   1    100 # Image region to fit (xmin xmax ymin ymax) \n'+
             'I) 100    100          # Size of the convolution box (x y) \n'+
@@ -164,7 +163,7 @@ if has_lens_light:
             '6) 0.0000      0          #     ----- \n'+
             '7) 0.0000      0          #     ----- \n'+
             '8) 0.0000      0          #     ----- \n'+
-            '9) 1.      0              #  axis ratio (b/a) \n'+
+            '9) 1.      1              #  axis ratio (b/a) \n'+
             '10) 90.0    1             #  position angle (PA) [deg: Up=0, Left=90] \n'+
             'Z) 0                      #  output option (0 = resid., 1 = Dont subtract) \n'
             )
